@@ -59,4 +59,5 @@ class DefaultFirebaseOptions {
     projectId: 'trip-planner13',
     storageBucket: 'trip-planner13.firebasestorage.app',
   );
+
 }
