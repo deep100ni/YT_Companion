@@ -1,4 +1,5 @@
 enum AppRoute{
+  home('home'),
   login('login'),
   signup('signup'),
   wrapper('wrapper');
