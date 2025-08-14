@@ -1,8 +1,46 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
+
+  Future<void> signInWithGoogle() async {
+       // Trigger the authentication flow
+       await GoogleSignIn.instance.initialize(
+         serverClientId: '825142671774-jpv5v4rved56b92h45crv85oh5ajpq92.apps.googleusercontent.com',
+       );
+
+       final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
+
+       // Obtain the auth details from the request
+       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+       // Create a new credential
+       final credential = GoogleAuthProvider.credential(
+         idToken: googleAuth.idToken,
+       );
+
+       // Sign in to Firebase
+       final UserCredential userCredential =
+       await FirebaseAuth.instance.signInWithCredential(credential);
+       final user = userCredential.user;
+
+       // Show SnackBar with user info
+       if (user != null) {
+         final displayName = user.displayName ?? "No Name";
+         final email = user.email ?? "No Email";
+
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: Text('Signed in as $displayName ($email)'),
+             duration: const Duration(seconds: 3),
+           ),
+         );
+       }
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +113,7 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 20),
               SignInButton(
                 Buttons.Google,
-                onPressed: () {},
+                onPressed: signInWithGoogle,
               ),
               SizedBox(height: 30),
               Row(
