@@ -15,7 +15,7 @@ class LoginScreen extends StatelessWidget {
        final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
 
        // Obtain the auth details from the request
-       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
        // Create a new credential
        final credential = GoogleAuthProvider.credential(

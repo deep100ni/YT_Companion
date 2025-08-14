@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
+import 'locator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  setupLocator();
+
   runApp(MyApp());
 }
 
@@ -18,11 +22,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router( // ✅ Use MaterialApp.router
       title: 'Trip Planner',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: false),
-      routerConfig : router,
+      routerConfig: router, // ✅ Correct here
     );
   }
 }

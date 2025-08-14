@@ -1,8 +1,7 @@
 enum AppRoute{
-  home('home'),
   login('login'),
   signup('signup'),
-  wrapper('wrapper');
+  home('home');
 
   const AppRoute(this.name);
 
