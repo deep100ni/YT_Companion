@@ -32,12 +32,12 @@ class LoginScreen extends StatelessWidget {
          final displayName = user.displayName ?? "No Name";
          final email = user.email ?? "No Email";
 
-         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
-             content: Text('Signed in as $displayName ($email)'),
-             duration: const Duration(seconds: 3),
-           ),
-         );
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Signed in as $displayName ($email)'),
+//             duration: const Duration(seconds: 3),
+//           ),
+//         );
        }
 
   }
