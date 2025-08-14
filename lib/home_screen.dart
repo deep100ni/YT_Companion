@@ -24,7 +24,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 40),
               const Center(
                 child: Text(
-                  'Home',
+                  'Home Screen',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -46,7 +46,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 24),
               const Center(
                 child: Text(
-                  'John Doe',
+                  'Deep Soni',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -56,7 +56,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 8),
               const Center(
                 child: Text(
-                  'johndoe@example.com',
+                  'deep@example.com',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.black54,
@@ -70,6 +70,7 @@ class HomeScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       // Implement log out functionality
+
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
