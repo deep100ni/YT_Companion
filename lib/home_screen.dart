@@ -10,6 +10,8 @@ class HomeScreen extends StatelessWidget {
     await FirebaseAuth.instance.signOut();
 
     // Redirect to login screen
+    if (!context.mounted) return;
+
     context.go(AppRoute.login.path);
   }
 
