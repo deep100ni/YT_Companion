@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trip_planner/repo/local_repo.dart';
+import 'package:trip_planner/screens/profile_screen.dart';
 import 'app_route.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
@@ -27,6 +28,11 @@ Future<GoRouter> getAppRouter() async {
         path: AppRoute.home.path,
         name: AppRoute.home.name,
         builder: (context, state) => HomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoute.profile.path,
+        name: AppRoute.profile.name,
+        builder: (context, state) => ProfileScreen(),
       ),
     ]
   );

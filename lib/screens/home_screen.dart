@@ -33,6 +33,10 @@ class HomeScreen extends StatelessWidget {
     context.go(AppRoute.login.path);
   }
 
+  void _profile(BuildContext context) {
+    context.push(AppRoute.profile.path);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,6 +83,20 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 40),
+              const Text(
+                'Profile',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                  onPressed: (){
+                    _profile(context);
+                  },
+                  child: const Text('Profile')),
               const SizedBox(height: 40),
               Center(
                 child: SizedBox(

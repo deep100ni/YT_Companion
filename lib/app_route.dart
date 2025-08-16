@@ -1,4 +1,5 @@
 enum AppRoute{
+  profile('profile'),
   login('login'),
   home('home');
 
