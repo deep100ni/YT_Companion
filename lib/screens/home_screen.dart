@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trip_planner/local_repo.dart';
-import 'package:trip_planner/user_repo.dart';
-import 'app_route.dart';
+import 'package:trip_planner/repo/local_repo.dart';
+import 'package:trip_planner/repo/user_repo.dart';
+import '../app_route.dart';
 
 class HomeScreen extends StatelessWidget {
   final UserRepo userRepo = GetIt.I.get();
@@ -31,6 +31,10 @@ class HomeScreen extends StatelessWidget {
     if (!context.mounted) return;
 
     context.go(AppRoute.login.path);
+  }
+
+  void _profile(BuildContext context) {
+    context.push(AppRoute.profile.path);
   }
 
   @override
@@ -79,6 +83,20 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 40),
+              const Text(
+                'Profile',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                  onPressed: (){
+                    _profile(context);
+                  },
+                  child: const Text('Profile')),
               const SizedBox(height: 40),
               Center(
                 child: SizedBox(

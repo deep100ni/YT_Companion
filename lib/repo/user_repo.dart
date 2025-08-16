@@ -12,13 +12,18 @@ class UserRepo{
 
     if(querySnapshot.docs.isNotEmpty){
       final doc = querySnapshot.docs.first;
-      return AppUser.fromJson(doc.data());
+      return AppUser.fromJson(doc.data(), doc.id);
     }
 
     return null;
   }
 
   Future<void> saveUser(AppUser user) async{
-    await coll.add(user.toJson());
+    final existingUser = await getUser(user.email);
+    if(existingUser != null){
+      await coll.doc(existingUser.id).update(user.toJson());
+    }else{
+      await coll.add(user.toJson());
+    }
   }
 }

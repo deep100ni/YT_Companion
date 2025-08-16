@@ -5,7 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trip_planner/app_route.dart';
-import 'package:trip_planner/local_repo.dart';
+import 'package:trip_planner/repo/local_repo.dart';
 
 class LoginScreen extends StatelessWidget {
   final LocalRepo localRepo = GetIt.I.get();
@@ -65,7 +65,7 @@ class LoginScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                'Login',
+                'Sign In',
                 style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
