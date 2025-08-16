@@ -2,13 +2,18 @@
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trip_planner/router.dart';
-import 'app_route.dart';
+import 'package:trip_planner/user_repo.dart';
+import 'local_repo.dart' ;
 
 final GetIt locator = GetIt.instance;
 
-void setupLocator() {
+Future<void> setupLocator() async {
+
+  locator.registerSingleton<LocalRepo>(LocalRepo());
+  locator.registerSingleton<UserRepo>(UserRepo());
+
   // Register GoRouter
   locator.registerSingleton<GoRouter>(
-    getAppRouter(AppRoute.home), // you can change initial route here
+    await getAppRouter(), // you can change initial route here
   );
 }
