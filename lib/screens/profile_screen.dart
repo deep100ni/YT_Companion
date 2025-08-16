@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:trip_planner/models/user.dart';
+import 'package:trip_planner/repo/user_repo.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,10 +15,29 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final UserRepo userRepo = UserRepo();
 
   DateTime? selectedDate; // DOB
-  String? gender; // Gender selection
+  Gender? gender; // Gender selection
   File? profileImage; // Profile image file
+
+  User? user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    user = FirebaseAuth.instance.currentUser;
+    user?.photoURL;
+    if (user != null) {
+      // Prefill name and email
+      nameController.text = user!.displayName ?? "";
+      emailController.text = user!.email ?? "";
+    }
+  }
 
   // Function to pick date
   Future<void> _pickDate() async {
@@ -72,8 +94,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: const Color(0xFFDDEBFF),
                         backgroundImage: profileImage != null
                             ? FileImage(profileImage!)
-                            : null,
-                        child: profileImage == null
+                            : (user?.photoURL != null
+                            ? NetworkImage(user!.photoURL!)
+                            : null) as ImageProvider?,
+                        child: (profileImage == null && user?.photoURL == null)
                             ? const Icon(Icons.person_outline,
                             size: 70, color: Colors.grey)
                             : null,
@@ -110,10 +134,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Input field for Email
+                // Input field for Email (Read-only)
                 TextField(
                   controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  readOnly: true,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: "Email",
@@ -140,7 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Gender Section in Card Style (Compact Radio Buttons)
+                // Gender Section
                 Container(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -161,37 +185,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       RadioListTile<String>(
                         title: const Text("Male"),
                         value: "Male",
-                        groupValue: gender,
+                        groupValue: gender?.name,
                         activeColor: Colors.red,
-                        dense: true, // reduces height
-                        visualDensity: VisualDensity.compact, // compact look
-                        contentPadding: EdgeInsets.zero, // remove padding
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        contentPadding: EdgeInsets.zero,
                         onChanged: (value) {
-                          setState(() => gender = value);
+                          setState(() => gender = Gender.male);
                         },
                       ),
                       RadioListTile<String>(
                         title: const Text("Female"),
                         value: "Female",
-                        groupValue: gender,
+                        groupValue: gender?.name,
                         activeColor: Colors.red,
                         dense: true,
                         visualDensity: VisualDensity.compact,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (value) {
-                          setState(() => gender = value);
+                          setState(() => gender = Gender.male);
                         },
                       ),
                       RadioListTile<String>(
                         title: const Text("Others"),
                         value: "Others",
-                        groupValue: gender,
+                        groupValue: gender?.name,
                         activeColor: Colors.red,
                         dense: true,
                         visualDensity: VisualDensity.compact,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (value) {
-                          setState(() => gender = value);
+                          setState(() => gender = Gender.male);
                         },
                       ),
                     ],
@@ -211,17 +235,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       String name = nameController.text;
                       String email = emailController.text;
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            "Name: $name\nEmail: $email\nDOB: ${selectedDate != null ? "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}" : "Not Selected"}\nGender: ${gender ?? "Not Selected"}\nProfile Image: ${profileImage != null ? "Selected" : "Not Selected"}",
+                            "Name: $name\nEmail: $email\nDOB: ${selectedDate != null ? "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}" : "Not Selected"}\nGender: ${gender ?? "Not Selected"}\nProfile Image: ${profileImage != null ? "Selected" : (user?.photoURL != null ? "From Google" : "Not Selected")}",
                           ),
                         ),
                       );
+                      final obj = AppUser(name: name, email: email, dob: selectedDate, gender: gender, photoUrl: user?.photoURL);
+                      await userRepo.saveUser(obj);
                     },
                     child: const Text(
                       "Save Profile",
