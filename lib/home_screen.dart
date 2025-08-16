@@ -15,9 +15,9 @@ class HomeScreen extends StatelessWidget {
   }
 
   Future<void> test() async {
-//    final user = AppUser(name: 'Deep Soni', email: 'deep@example.com');
-//    await userRepo.saveUser(user);
-//    print('DEEPLOG userSaved!');
+   // final user = AppUser(name: 'Lavish Soni', email: 'lavish@example.com');
+   // await userRepo.saveUser(user);
+   // print('DEEPLOG userSaved!');
 
 //    final user = await userRepo.getUser('deep@example.com');
 //    print('DEEPLOG user: ${user?.toJson()}');
