@@ -184,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       RadioListTile<String>(
                         title: const Text("Male"),
-                        value: "Male",
+                        value: Gender.male.name, // store as string
                         groupValue: gender?.name,
                         activeColor: Colors.red,
                         dense: true,
@@ -196,26 +196,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       RadioListTile<String>(
                         title: const Text("Female"),
-                        value: "Female",
+                        value: Gender.female.name,
                         groupValue: gender?.name,
                         activeColor: Colors.red,
                         dense: true,
                         visualDensity: VisualDensity.compact,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (value) {
-                          setState(() => gender = Gender.male);
+                          setState(() => gender = Gender.female);
                         },
                       ),
                       RadioListTile<String>(
                         title: const Text("Others"),
-                        value: "Others",
+                        value: Gender.other.name,
                         groupValue: gender?.name,
                         activeColor: Colors.red,
                         dense: true,
                         visualDensity: VisualDensity.compact,
                         contentPadding: EdgeInsets.zero,
                         onChanged: (value) {
-                          setState(() => gender = Gender.male);
+                          setState(() => gender = Gender.other);
                         },
                       ),
                     ],

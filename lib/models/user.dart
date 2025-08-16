@@ -9,6 +9,8 @@ enum Gender {
 
 @JsonSerializable()
 class AppUser{
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String id;
   String name;
   String email;
   Gender? gender;
@@ -18,6 +20,7 @@ class AppUser{
   String? photoUrl;
 
   AppUser({
+    this.id = '',
     required this.name,
     required this.email,
     this.gender,
@@ -25,7 +28,28 @@ class AppUser{
     this.photoUrl,
   });
 
-  factory AppUser.fromJson(Map<String, dynamic> json) => _$AppUserFromJson(json);
+  AppUser copyWith({
+    String? id,
+    String? name,
+    String? email,
+    Gender? gender,
+    DateTime? dob,
+    String? photoUrl,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      gender: gender ?? this.gender,
+      dob: dob ?? this.dob,
+      photoUrl: photoUrl ?? this.photoUrl,
+    );
+  }
+
+  factory AppUser.fromJson(Map<String, dynamic> json, String id) {
+    final user = _$AppUserFromJson(json);
+    return user.copyWith(id: id);
+  }
   Map<String, dynamic> toJson() => _$AppUserToJson(this);
 
   static DateTime? _fromJson(Timestamp? ts) => ts?.toDate();
