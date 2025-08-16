@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trip_planner/local_repo.dart';
-import 'package:trip_planner/user_repo.dart';
-import 'app_route.dart';
+import 'package:trip_planner/repo/local_repo.dart';
+import 'package:trip_planner/repo/user_repo.dart';
+import '../app_route.dart';
 
 class HomeScreen extends StatelessWidget {
   final UserRepo userRepo = GetIt.I.get();

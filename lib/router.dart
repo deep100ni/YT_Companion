@@ -1,9 +1,9 @@
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trip_planner/local_repo.dart';
+import 'package:trip_planner/repo/local_repo.dart';
 import 'app_route.dart';
-import 'home_screen.dart';
-import 'login_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
 Future<GoRouter> getAppRouter() async {
   final LocalRepo localRepo = GetIt.I.get();
