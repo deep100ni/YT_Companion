@@ -7,6 +7,12 @@ class LocalRepo{
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool(_KeyIsLoggedIn, true);
   }
+
+  Future<void> onLoggedOut() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool(_KeyIsLoggedIn, false);
+  }
+
   Future<bool> isLoggedIn() async{
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_KeyIsLoggedIn) ?? false;
