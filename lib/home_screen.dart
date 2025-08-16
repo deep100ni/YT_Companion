@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trip_planner/user_repo.dart';
 import 'app_route.dart'; // for AppRoute.login
+import 'package:trip_planner/models/user.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final UserRepo userRepo = GetIt.I.get();
+
+  HomeScreen({super.key}) {
+    test();
+  }
+
+  Future<void> test() async {
+//    final user = AppUser(name: 'Deep Soni', email: 'deep@example.com');
+//    await userRepo.saveUser(user);
+//    print('DEEPLOG userSaved!');
+
+//    final user = await userRepo.getUser('deep@example.com');
+//    print('DEEPLOG user: ${user?.toJson()}');
+  }
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
