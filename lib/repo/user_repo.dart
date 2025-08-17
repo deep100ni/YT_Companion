@@ -12,7 +12,7 @@ class UserRepo{
 
     if(querySnapshot.docs.isNotEmpty){
       final doc = querySnapshot.docs.first;
-      return AppUser.fromJson(doc.data(), doc.id);
+      return AppUser.fromJsonAndId(doc.data(), doc.id);
     }
 
     return null;

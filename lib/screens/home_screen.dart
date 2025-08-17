@@ -5,31 +5,32 @@ import 'package:go_router/go_router.dart';
 import 'package:trip_planner/repo/local_repo.dart';
 import 'package:trip_planner/repo/user_repo.dart';
 import '../app_route.dart';
+import '../models/user.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final UserRepo userRepo = GetIt.I.get();
   final LocalRepo localRepo = GetIt.I.get();
 
-  HomeScreen({super.key}) {
-    test();
-  }
+  AppUser? user;
 
-  Future<void> test() async {
-   // final user = AppUser(name: 'Lavish Soni', email: 'lavish@example.com');
-   // await userRepo.saveUser(user);
-   // print('DEEPLOG userSaved!');
+  @override
+  void initState() {
+    super.initState();
 
-//    final user = await userRepo.getUser('deep@example.com');
-//    print('DEEPLOG user: ${user?.toJson()}');
+    start();
   }
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
-
     await localRepo.onLoggedOut();
-    // Redirect to login screen
     if (!context.mounted) return;
-
     context.go(AppRoute.login.path);
   }
 
@@ -42,83 +43,63 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         elevation: 5,
-        title: Text('Home Screen'),
+        title: const Text('Home Screen'),
         backgroundColor: Colors.red,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              const Center(
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Color(0xFFDDEBFF),
-                  child: Icon(
-                    Icons.person_outline,
-                    size: 60,
-                    color: Colors.grey,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTapDown: (details) {
+                showMenu(
+                  context: context,
+                  position: RelativeRect.fromLTRB(
+                    details.globalPosition.dx,
+                    details.globalPosition.dy,
+                    MediaQuery.of(context).size.width - details.globalPosition.dx,
+                    0,
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Center(
-                child: Text(
-                  'Deep Soni',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Center(
-                child: Text(
-                  'deep@example.com',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                'Profile',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                  onPressed: (){
-                    _profile(context);
-                  },
-                  child: const Text('Profile')),
-              const SizedBox(height: 40),
-              Center(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => _logout(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  items: [
+                    PopupMenuItem(
+                      child: const Text("Profile"),
+                      onTap: () {
+                        Future.delayed(
+                          Duration.zero,
+                              () => _profile(context),
+                        );
+                      },
                     ),
-                    child: const Text("Log out"),
-                  ),
+                    PopupMenuItem(
+                      child: const Text("Logout"),
+                      onTap: () {
+                        Future.delayed(
+                          Duration.zero,
+                              () => _logout(context),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
+              child: CircleAvatar(
+                radius: 18,
+                backgroundImage: NetworkImage(
+                  user?.photoUrl ?? ''
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          )
+        ],
+      ),
+      body: const Center(
+        child: Text("Home Screen Body"),
       ),
     );
+  }
+
+  Future<void> start() async {
+    final _user = await localRepo.getUser();
+    setState(() {
+      user = _user;
+    });
   }
 }

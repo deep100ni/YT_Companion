@@ -1,12 +1,19 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:trip_planner/app_route.dart';
 import 'package:trip_planner/models/user.dart';
+import 'package:trip_planner/repo/local_repo.dart';
 import 'package:trip_planner/repo/user_repo.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+
+  ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -16,12 +23,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final UserRepo userRepo = UserRepo();
+  final LocalRepo localRepo = GetIt.I.get();
 
   DateTime? selectedDate; // DOB
   Gender? gender; // Gender selection
   File? profileImage; // Profile image file
 
   User? user;
+
 
   @override
   void initState() {
@@ -236,18 +245,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     onPressed: () async {
-                      String name = nameController.text;
-                      String email = emailController.text;
+                      // Check internet connection
+                      var connectivityResult = await Connectivity().checkConnectivity();
+                      if (!context.mounted) return;
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            "Name: $name\nEmail: $email\nDOB: ${selectedDate != null ? "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}" : "Not Selected"}\nGender: ${gender ?? "Not Selected"}\nProfile Image: ${profileImage != null ? "Selected" : (user?.photoURL != null ? "From Google" : "Not Selected")}",
-                          ),
+                      if (connectivityResult.contains(ConnectivityResult.none)) {
+                        // Show offline message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("You are offline. Please connect to the internet.")),
+                        );
+                        return;
+                      }
+
+                      // Show loading dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => const Center(
+                          child: CircularProgressIndicator(color: Colors.red),
                         ),
                       );
-                      final obj = AppUser(name: name, email: email, dob: selectedDate, gender: gender, photoUrl: user?.photoURL);
-                      await userRepo.saveUser(obj);
+
+                      try {
+                        final obj = AppUser(
+                          name: nameController.text,
+                          email: emailController.text,
+                          dob: selectedDate,
+                          gender: gender,
+                          photoUrl: user?.photoURL,
+                        );
+
+                        await userRepo.saveUser(obj);
+                        await localRepo.onLoggedIn(obj);
+                        if (!context.mounted) return;
+
+                        Navigator.of(context).pop();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Profile saved successfully!")),
+                        );
+                        context.go(AppRoute.home.path);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        Navigator.of(context).pop(); // close loading
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error: ${e.toString()}")),
+                        );
+                      }
                     },
                     child: const Text(
                       "Save Profile",

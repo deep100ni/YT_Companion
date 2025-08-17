@@ -9,7 +9,6 @@ enum Gender {
 
 @JsonSerializable()
 class AppUser{
-  @JsonKey(includeFromJson: false, includeToJson: false)
   final String id;
   String name;
   String email;
@@ -46,9 +45,13 @@ class AppUser{
     );
   }
 
-  factory AppUser.fromJson(Map<String, dynamic> json, String id) {
+  factory AppUser.fromJsonAndId(Map<String, dynamic> json, String id) {
     final user = _$AppUserFromJson(json);
     return user.copyWith(id: id);
+  }
+
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    return _$AppUserFromJson(json);
   }
   Map<String, dynamic> toJson() => _$AppUserToJson(this);
 
