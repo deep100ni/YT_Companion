@@ -48,6 +48,7 @@ dependencies:
   image_picker: ^1.1.2
   connectivity_plus: ^6.1.5
   flutter_svg: ^2.0.13
+  iconsax: ^0.0.8
 
 dev_dependencies:
   flutter_test:

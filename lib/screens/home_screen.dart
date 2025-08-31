@@ -4,6 +4,8 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trip_planner/repo/local_repo.dart';
 import 'package:trip_planner/repo/user_repo.dart';
+import 'package:trip_planner/screens/upload_content_screen.dart';
+import 'package:trip_planner/widget/Input_widget/upload_content_card_widget.dart';
 import '../app_route.dart';
 import '../models/user.dart';
 
@@ -90,8 +92,17 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
-      body: const Center(
-        child: Text("Home Screen Body"),
+      body: Center(
+        child: UploadContentCard(
+          onTap: () {
+            // Handle upload button click here
+            // Example: Navigate to an Upload Screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UploadContentScreen()),
+            );
+          },
+        ),
       ),
     );
   }
