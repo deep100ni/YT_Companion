@@ -22,9 +22,9 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        elevation: 5,
+        backgroundColor: Colors.red,   // 🔴 match HomeScreen theme
+        foregroundColor: Colors.white, // 🔴 white icons & text
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -120,12 +120,12 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Analyze Button
+            // Analyze Button (🔴 red like Home theme)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Colors.red, // 🔴 match HomeScreen theme
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
