@@ -12,8 +12,7 @@ import 'package:trip_planner/repo/local_repo.dart';
 import 'package:trip_planner/repo/user_repo.dart';
 
 class ProfileScreen extends StatefulWidget {
-
-  ProfileScreen({super.key});
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -25,12 +24,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UserRepo userRepo = UserRepo();
   final LocalRepo localRepo = GetIt.I.get();
 
-  DateTime? selectedDate; // DOB
-  Gender? gender; // Gender selection
-  File? profileImage; // Profile image file
-
+  DateTime? selectedDate;
+  Gender? gender;
+  File? profileImage;
   User? user;
-
 
   @override
   void initState() {
@@ -40,15 +37,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _loadUserData() {
     user = FirebaseAuth.instance.currentUser;
-    user?.photoURL;
     if (user != null) {
-      // Prefill name and email
       nameController.text = user!.displayName ?? "";
       emailController.text = user!.email ?? "";
     }
   }
 
-  // Function to pick date
   Future<void> _pickDate() async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -56,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-
     if (picked != null) {
       setState(() {
         selectedDate = picked;
@@ -64,17 +57,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Function to pick profile image
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile =
-    await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
         profileImage = File(pickedFile.path);
       });
     }
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    await localRepo.onLoggedOut();
+    if (!context.mounted) return;
+    context.go(AppRoute.login.path);
   }
 
   @override
@@ -94,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const SizedBox(height: 40),
 
-                // Profile Image with Edit Option
+                // Profile Image
                 Center(
                   child: Stack(
                     children: [
@@ -132,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Input field for Name
+                // Name
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(
@@ -143,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Input field for Email (Read-only)
+                // Email
                 TextField(
                   controller: emailController,
                   readOnly: true,
@@ -155,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Date Picker for DOB
+                // DOB
                 InkWell(
                   onTap: _pickDate,
                   child: InputDecorator(
@@ -173,12 +171,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Gender Section
+                // Gender
                 Container(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFCDD2), // light red background
+                    color: const Color(0xFFFFCDD2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -193,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       RadioListTile<String>(
                         title: const Text("Male"),
-                        value: Gender.male.name, // store as string
+                        value: Gender.male.name,
                         groupValue: gender?.name,
                         activeColor: Colors.red,
                         dense: true,
@@ -245,19 +243,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     onPressed: () async {
-                      // Check internet connection
-                      var connectivityResult = await Connectivity().checkConnectivity();
+                      var connectivityResult =
+                      await Connectivity().checkConnectivity();
                       if (!context.mounted) return;
 
                       if (connectivityResult.contains(ConnectivityResult.none)) {
-                        // Show offline message
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("You are offline. Please connect to the internet.")),
+                          const SnackBar(
+                              content: Text("You are offline. Please connect to the internet.")),
                         );
                         return;
                       }
 
-                      // Show loading dialog
                       showDialog(
                         context: context,
                         barrierDismissible: false,
@@ -280,14 +277,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (!context.mounted) return;
 
                         Navigator.of(context).pop();
-                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Profile saved successfully!")),
+                          const SnackBar(
+                              content: Text("Profile saved successfully!")),
                         );
                         context.go(AppRoute.home.path);
                       } catch (e) {
                         if (!context.mounted) return;
-                        Navigator.of(context).pop(); // close loading
+                        Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Error: ${e.toString()}")),
                         );
@@ -299,6 +296,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 16),
+
+                // Logout Button
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 40, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () => _logout(context),
+                    child: const Text(
+                      "Logout",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 20),
               ],
             ),
