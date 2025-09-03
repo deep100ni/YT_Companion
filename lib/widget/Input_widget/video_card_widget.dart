@@ -32,9 +32,7 @@ class VideoCard extends StatelessWidget {
               builder: (_) => UploadContentScreen(
                 title: title,
                 description: "This is a sample video description for $title.",
-                thumbnailUrl: thumbnailUrl,
-                comments:
-                "User1: Great video!\nUser2: Please make more tutorials.",
+                thumbnailUrl: thumbnailUrl, comments: [],
               ),
             ),
           );
