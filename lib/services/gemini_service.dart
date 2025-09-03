@@ -9,19 +9,33 @@ class GeminiService {
 
   Future<Map<String, dynamic>> analyzeVideo(
       String title, String description, List<String> comments) async {
+    // --- PROMPT UPDATED HERE ---
     final prompt = '''
-Analyze this video and provide structured insights.
+Analyze the following video's title, description, and comments.
 
-Title: $title
-Description: $description
-Comments: ${comments.join("\n")}
+**Title:** $title
+**Description:** $description
+**Comments:** ${comments.join("\n")}
 
-Return JSON like:
+Your main goal is to provide actionable advice to help the creator improve their content and grow their audience.
+
+Return ONLY a raw JSON string with the following structure:
 {
-  "videoTips": ["...", "...", "...", "..."],
+  "videoTips": [
+    "Tip 1: A specific, actionable tip on how to make the first 15 seconds more engaging to improve audience retention.",
+    "Tip 2: A constructive suggestion regarding the video's pacing, editing, or clarity to keep viewers engaged.",
+    "Tip 3: A recommendation for adding specific visual elements (like graphics, text overlays, or B-roll) to better explain complex topics.",
+    "Tip 4: An idea for a follow-up video on a related or more advanced topic that the audience is asking for or would likely enjoy."
+  ],
   "commentSummary": {
-    "positiveFeedback": ["...", "..."],
-    "commonQuestions": ["...", "..."]
+    "positiveFeedback": [
+      "A direct quote of positive feedback from the comments.",
+      "Another summarized piece of positive feedback."
+    ],
+    "commonQuestions": [
+      "A frequently asked question from the comments.",
+      "Another common question or a request for a future video."
+    ]
   },
   "audienceSentiment": {
     "positive": 78,
@@ -40,15 +54,24 @@ Return JSON like:
     final text = response.text ?? '{}';
 
     try {
-      return Map<String, dynamic>.from(jsonDecode(text));
+      // Clean the response to ensure it's valid JSON before parsing
+      final startIndex = text.indexOf('{');
+      final endIndex = text.lastIndexOf('}');
+
+      if (startIndex != -1 && endIndex != -1) {
+        final jsonString = text.substring(startIndex, endIndex + 1);
+        return Map<String, dynamic>.from(jsonDecode(jsonString));
+      } else {
+        throw const FormatException("No valid JSON object found in the response.");
+      }
     } catch (e) {
-      print("⚠️ JSON Parse Error: $e\n$text");
-      // fallback structure to prevent null errors
+      print("⚠️ JSON Parse Error: $e\nRaw Response Text: \n$text");
+      // Fallback structure to prevent null errors in the UI
       return {
-        "videoTips": [],
+        "videoTips": ["Error: Could not generate improvement tips."],
         "commentSummary": {
-          "positiveFeedback": [],
-          "commonQuestions": []
+          "positiveFeedback": ["Could not load feedback."],
+          "commonQuestions": ["Could not load questions."]
         },
         "audienceSentiment": {
           "positive": 0,
