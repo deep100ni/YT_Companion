@@ -1,6 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
-import '../services/gemini_service.dart';
+import '../services/gemini_service.dart'; // Make sure this path is correct
+
+// It's best practice to use a data model for structured API responses.
+// This prevents typos in string keys and makes your code type-safe.
+class AnalysisResult {
+  final List<String> videoTips;
+  final Map<String, List<String>> commentSummary;
+  final Map<String, int> audienceSentiment;
+
+  // Convenience getters for easier access in the UI
+  List<String> get positiveFeedback => commentSummary['positiveFeedback'] ?? [];
+  List<String> get commonQuestions => commentSummary['commonQuestions'] ?? [];
+
+  AnalysisResult({
+    required this.videoTips,
+    required this.commentSummary,
+    required this.audienceSentiment,
+  });
+
+  // Factory constructor to parse the JSON map from GeminiService
+  factory AnalysisResult.fromJson(Map<String, dynamic> json) {
+    return AnalysisResult(
+      videoTips: List<String>.from(json['videoTips'] ?? []),
+      commentSummary: {
+        'positiveFeedback': List<String>.from(json['commentSummary']?['positiveFeedback'] ?? []),
+        'commonQuestions': List<String>.from(json['commentSummary']?['commonQuestions'] ?? []),
+      },
+      audienceSentiment: {
+        'positive': (json['audienceSentiment']?['positive'] ?? 0).toInt(),
+        'neutral': (json['audienceSentiment']?['neutral'] ?? 0).toInt(),
+        'negative': (json['audienceSentiment']?['negative'] ?? 0).toInt(),
+      },
+    );
+  }
+}
+
 
 class AnalysisScreen extends StatefulWidget {
   final String title;
@@ -19,8 +53,9 @@ class AnalysisScreen extends StatefulWidget {
 }
 
 class _AnalysisScreenState extends State<AnalysisScreen> {
-  Map<String, dynamic>? analysisData;
+  AnalysisResult? analysisData;
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -29,18 +64,39 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   }
 
   Future<void> _getAnalysis() async {
-    // 🔑 Replace with your Gemini API key
-    final service = GeminiService("AIzaSyDypeISGo1ikzDtD3UpvvXcSLPO9HtVwY8");
+    // ⚠️ CRITICAL SECURITY WARNING ⚠️
+    // Never hardcode your API key in the source code.
+    // Use environment variables to keep it secure.
+    // final apiKey = String.fromEnvironment('GEMINI_API_KEY');
+    // if (apiKey.isEmpty) {
+    //   setState(() {
+    //     errorMessage = "API Key is not configured. Please set it up via environment variables.";
+    //     isLoading = false;
+    //   });
+    //   return;
+    // }
+    // final service = GeminiService(apiKey);
+
+    // Using the placeholder key for now, but please replace it.
+    final service = GeminiService("AIzaSyB-QyrNxjsfDuKbWsg_VpJKkIhfBDRxPqk"); // ⬅️ Replace with a secure method
     final commentList =
     widget.comments.map((c) => "${c['author']}: ${c['comment']}").toList();
 
-    final result = await service.analyzeVideo(
-        widget.title, widget.description, commentList);
+    try {
+      final result = await service.analyzeVideo(
+          widget.title, widget.description, commentList);
 
-    setState(() {
-      analysisData = result;
-      isLoading = false;
-    });
+      // We now parse the map into our structured AnalysisResult object
+      setState(() {
+        analysisData = AnalysisResult.fromJson(result);
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = "Failed to get analysis. Please try again later.\nError: $e";
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -51,31 +107,45 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         backgroundColor: Colors.red,
         foregroundColor: Colors.white,
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : analysisData == null
-          ? const Center(child: Text("No analysis available"))
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildVideoTips(analysisData!['videoTips']),
-            const SizedBox(height: 16),
-            _buildCommentSummary(analysisData!['commentSummary']),
-            const SizedBox(height: 16),
-            _buildAudienceSentiment(
-                analysisData!['audienceSentiment']),
-            const SizedBox(height: 16),
-            _buildEngagementInsights(
-                analysisData!['engagementInsights']),
-          ],
-        ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage != null) {
+      return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(errorMessage!, textAlign: TextAlign.center),
+          ));
+    }
+
+    if (analysisData == null) {
+      return const Center(child: Text("No analysis available"));
+    }
+
+    // Now we can access data safely, e.g., analysisData!.videoTips
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildVideoTips(analysisData!.videoTips),
+          const SizedBox(height: 16),
+          _buildCommentSummary(analysisData!),
+          const SizedBox(height: 16),
+          _buildAudienceSentiment(analysisData!.audienceSentiment),
+        ],
       ),
     );
   }
 
-  Widget _buildVideoTips(List<dynamic> tips) {
+  Widget _buildVideoTips(List<String> tips) {
+    // ... (Your existing _buildVideoTips widget code is fine, no changes needed)
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -107,10 +177,10 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildCommentSummary(Map<String, dynamic> summary) {
-    final List<dynamic> positiveFeedback = summary['positiveFeedback'];
-    final List<dynamic> commonQuestions = summary['commonQuestions'];
-
+  Widget _buildCommentSummary(AnalysisResult data) {
+    // ... (Your existing _buildCommentSummary widget code can be simplified)
+    final List<String> positiveFeedback = data.positiveFeedback;
+    final List<String> commonQuestions = data.commonQuestions;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -164,7 +234,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildAudienceSentiment(Map<String, dynamic> sentiment) {
+  Widget _buildAudienceSentiment(Map<String, int> sentiment) {
+    // ... (Your existing _buildAudienceSentiment widget code is fine, just needs integers)
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -178,11 +249,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             ),
             const SizedBox(height: 12),
             _buildSentimentIndicator(
-                "Positive", sentiment['positive'].toDouble(), Colors.green),
+                "Positive", (sentiment['positive'] ?? 0).toDouble(), Colors.green),
             _buildSentimentIndicator(
-                "Neutral", sentiment['neutral'].toDouble(), Colors.grey),
+                "Neutral", (sentiment['neutral'] ?? 0).toDouble(), Colors.grey),
             _buildSentimentIndicator(
-                "Negative", sentiment['negative'].toDouble(), Colors.red),
+                "Negative", (sentiment['negative'] ?? 0).toDouble(), Colors.red),
           ],
         ),
       ),
@@ -191,6 +262,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   Widget _buildSentimentIndicator(
       String label, double value, Color color) {
+    // ... (Your existing _buildSentimentIndicator widget code is fine)
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -210,47 +282,5 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildEngagementInsights(Map<String, dynamic> insights) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Engagement Insights",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildInsight(
-                    "${insights['likeRatio']}%", "Like Ratio"),
-                _buildInsight(
-                    "${insights['commentRate']}%", "Comment Rate"),
-                _buildInsight(
-                    "${insights['shareRate']}%", "Share Rate"),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInsight(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.grey)),
-      ],
-    );
-  }
+// REMOVED _buildEngagementInsights widget
 }

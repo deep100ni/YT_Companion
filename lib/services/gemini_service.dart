@@ -5,47 +5,64 @@ class GeminiService {
   final GenerativeModel _model;
 
   GeminiService(String apiKey)
-      : _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+  // It's often better to use a more powerful model for complex, multi-part JSON outputs.
+  // 'gemini-1.5-pro' might yield more consistent results than 'gemini-1.5-flash'.
+      : _model = GenerativeModel(model: 'gemini-1.5-pro-latest', apiKey: apiKey);
 
   Future<Map<String, dynamic>> analyzeVideo(
       String title, String description, List<String> comments) async {
-    // --- PROMPT UPDATED HERE ---
+    // --- PROMPT UPDATED AND RE-EXPANDED HERE ---
     final prompt = '''
-Analyze the following video's title, description, and comments.
+**Objective:** Analyze the provided video content (title, description, comments) and generate a structured JSON output containing actionable advice, a summary of feedback, and a sentiment analysis of the comments.
 
-**Title:** $title
-**Description:** $description
-**Comments:** ${comments.join("\n")}
+**Video Title:** $title
+**Video Description:** $description
+**Comments:**
+${comments.join("\n")}
 
-Your main goal is to provide actionable advice to help the creator improve their content and grow their audience.
+---
 
-Return ONLY a raw JSON string with the following structure:
+**Instructions for the AI Model:**
+Carefully review all the provided information. Fulfill each of the following tasks and structure your entire response as a single, raw JSON object. Do not include any text or formatting outside of the JSON structure.
+
+**Task 1: Generate Actionable Video Tips**
+- Create a `videoTips` array of strings.
+- Each string should be a unique, specific, and actionable tip for the content creator.
+- Base these tips on the video's title, description, and the feedback within the comments.
+
+**Task 2: Summarize Key Comments**
+- Create a `commentSummary` object.
+- Inside this object, create two arrays of strings: `positiveFeedback` and `commonQuestions`.
+- Populate `positiveFeedback` with direct quotes or summaries of encouraging comments.
+- Populate `commonQuestions` with frequently asked questions or suggestions for future videos found in the comments.
+
+**Task 3: Analyze Audience Sentiment**
+- Create an `audienceSentiment` object.
+- **Based ONLY on the provided comments**, classify the sentiment of the audience.
+- Calculate the percentage for "positive", "neutral", and "negative" sentiments.
+- The sum of these three percentages must equal 100.
+
+**Final Output Structure:**
+Return ONLY a raw JSON string matching this exact format:
 {
   "videoTips": [
-    "Tip 1: A specific, actionable tip on how to make the first 15 seconds more engaging to improve audience retention.",
-    "Tip 2: A constructive suggestion regarding the video's pacing, editing, or clarity to keep viewers engaged.",
-    "Tip 3: A recommendation for adding specific visual elements (like graphics, text overlays, or B-roll) to better explain complex topics.",
-    "Tip 4: An idea for a follow-up video on a related or more advanced topic that the audience is asking for or would likely enjoy."
+    "Actionable tip based on the provided content...",
+    "Another constructive suggestion..."
   ],
   "commentSummary": {
     "positiveFeedback": [
-      "A direct quote of positive feedback from the comments.",
-      "Another summarized piece of positive feedback."
+      "Summary of positive feedback from comments...",
+      "A direct quote of positive feedback..."
     ],
     "commonQuestions": [
-      "A frequently asked question from the comments.",
-      "Another common question or a request for a future video."
+      "A common question asked by viewers...",
+      "A request for a follow-up video..."
     ]
   },
   "audienceSentiment": {
-    "positive": 78,
-    "neutral": 18,
-    "negative": 4
-  },
-  "engagementInsights": {
-    "likeRatio": 96,
-    "commentRate": 12,
-    "shareRate": 8
+    "positive": <integer>,
+    "neutral": <integer>,
+    "negative": <integer>
   }
 }
 ''';
@@ -77,11 +94,6 @@ Return ONLY a raw JSON string with the following structure:
           "positive": 0,
           "neutral": 0,
           "negative": 0
-        },
-        "engagementInsights": {
-          "likeRatio": 0,
-          "commentRate": 0,
-          "shareRate": 0
         }
       };
     }
