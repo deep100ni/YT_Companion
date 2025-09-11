@@ -3,12 +3,10 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'user.g.dart';
 
-enum Gender {
-  male, female, other
-}
+enum Gender { male, female, other }
 
 @JsonSerializable()
-class AppUser{
+class AppUser {
   final String id;
   String name;
   String email;
@@ -18,6 +16,9 @@ class AppUser{
   DateTime? dob;
   String? photoUrl;
 
+  /// YouTube Channel ID (linked from handle)
+  String? channelId;
+
   AppUser({
     this.id = '',
     required this.name,
@@ -25,6 +26,7 @@ class AppUser{
     this.gender,
     this.dob,
     this.photoUrl,
+    this.channelId,
   });
 
   AppUser copyWith({
@@ -34,6 +36,7 @@ class AppUser{
     Gender? gender,
     DateTime? dob,
     String? photoUrl,
+    String? channelId,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -42,6 +45,7 @@ class AppUser{
       gender: gender ?? this.gender,
       dob: dob ?? this.dob,
       photoUrl: photoUrl ?? this.photoUrl,
+      channelId: channelId ?? this.channelId,
     );
   }
 
@@ -50,11 +54,12 @@ class AppUser{
     return user.copyWith(id: id);
   }
 
-  factory AppUser.fromJson(Map<String, dynamic> json) {
-    return _$AppUserFromJson(json);
-  }
+  factory AppUser.fromJson(Map<String, dynamic> json) =>
+      _$AppUserFromJson(json);
+
   Map<String, dynamic> toJson() => _$AppUserToJson(this);
 
   static DateTime? _fromJson(Timestamp? ts) => ts?.toDate();
-  static Timestamp? _toJson(DateTime? dt) => dt == null ? null : Timestamp.fromDate(dt);
+  static Timestamp? _toJson(DateTime? dt) =>
+      dt == null ? null : Timestamp.fromDate(dt);
 }

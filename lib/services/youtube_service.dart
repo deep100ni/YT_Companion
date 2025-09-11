@@ -1,12 +1,16 @@
+// youtube_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class YoutubeService {
-  final String apiKey = "AIzaSyAICh5kwtWeAj-q-iRCo-fos10_bNaUj_k";
-  final String channelId = "UCKwZlZqWAA3G1IV-mdXeMaw";
+  final String apiKey =
+      "AIzaSyAICh5kwtWeAj-q-iRCo-fos10_bNaUj_k"; // Replace with your actual API key
 
-  /// Fetch ALL videos (with pagination), optional search
-  Future<List<Map<String, dynamic>>> fetchVideos({String? searchQuery}) async {
+  /// Fetch videos with metadata + stats
+  Future<List<Map<String, dynamic>>> fetchVideos({
+    required String channelId,
+    String? searchQuery,
+  }) async {
     List<Map<String, dynamic>> videos = [];
     String? nextPageToken;
 
@@ -31,13 +35,17 @@ class YoutubeService {
       final List items = data["items"];
       nextPageToken = data["nextPageToken"];
 
+      // Collect video IDs
+      final List<String> videoIds =
+      items.map((item) => item["id"]["videoId"] as String).toList();
+
+      // Fetch all stats in one go
+      final statsMap = await fetchVideoStatsBatch(videoIds);
+
+      // Build video list
       for (var item in items) {
         final snippet = item["snippet"];
         final videoId = item["id"]["videoId"];
-
-        final stats = await fetchVideoStats(videoId);
-        final views = stats["viewCount"] ?? "0";
-        final comments = await fetchAllComments(videoId);
 
         videos.add({
           "videoId": videoId,
@@ -47,8 +55,9 @@ class YoutubeService {
           "description": snippet["description"]?.isNotEmpty == true
               ? snippet["description"]
               : "No description available",
-          "views": views,
-          "comments": comments,
+          "views": statsMap[videoId]?["viewCount"] ?? "0",
+          // Lazy load comments only when needed
+          "commentsLoader": () => fetchAllComments(videoId),
         });
       }
     } while (nextPageToken != null);
@@ -56,22 +65,31 @@ class YoutubeService {
     return videos;
   }
 
-  /// Fetch video statistics
-  Future<Map<String, dynamic>> fetchVideoStats(String videoId) async {
+  /// Batch fetch video stats (up to 50 IDs per call)
+  Future<Map<String, dynamic>> fetchVideoStatsBatch(
+      List<String> videoIds) async {
+    if (videoIds.isEmpty) return {};
+
     final url =
-        "https://www.googleapis.com/youtube/v3/videos?part=statistics&id=$videoId&key=$apiKey";
+        "https://www.googleapis.com/youtube/v3/videos"
+        "?part=statistics"
+        "&id=${videoIds.join(',')}"
+        "&key=$apiKey";
 
     final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data["items"].isNotEmpty) {
-        return data["items"][0]["statistics"];
-      }
+    if (response.statusCode != 200) return {};
+
+    final data = json.decode(response.body);
+    final Map<String, dynamic> statsMap = {};
+
+    for (var item in data["items"]) {
+      statsMap[item["id"]] = item["statistics"];
     }
-    return {};
+
+    return statsMap;
   }
 
-  /// Fetch all comments
+  /// Fetch all comments for a video (optional on-demand)
   Future<List<Map<String, String>>> fetchAllComments(String videoId) async {
     List<Map<String, String>> comments = [];
     String? nextPageToken;
@@ -102,5 +120,46 @@ class YoutubeService {
     } while (nextPageToken != null);
 
     return comments;
+  }
+
+  /// Get channel ID from @handle
+  Future<String?> fetchChannelIdFromHandle(String handle) async {
+    final url =
+        "https://www.googleapis.com/youtube/v3/channels"
+        "?part=id&forHandle=$handle&key=$apiKey";
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data["items"].isNotEmpty) {
+        return data["items"][0]["id"];
+      }
+    }
+    return null;
+  }
+
+  /// Fetch channel details (title, description, thumbnail, subscriber count)
+  Future<Map<String, dynamic>?> fetchChannelDetails(String channelId) async {
+    final url = "https://www.googleapis.com/youtube/v3/channels"
+        "?part=snippet,statistics" // Request snippet and statistics
+        "&id=$channelId"
+        "&key=$apiKey";
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode != 200) return null;
+
+    final data = json.decode(response.body);
+    if (data["items"].isEmpty) return null;
+
+    final item = data["items"][0];
+    final snippet = item["snippet"];
+    final statistics = item["statistics"];
+
+    return {
+      "title": snippet["title"],
+      "description": snippet["description"],
+      "thumbnail": snippet["thumbnails"]["high"]["url"],
+      "subscriberCount": statistics["subscriberCount"],
+    };
   }
 }

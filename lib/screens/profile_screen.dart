@@ -1,15 +1,18 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:trip_planner/app_route.dart';
 import 'package:trip_planner/models/user.dart';
 import 'package:trip_planner/repo/local_repo.dart';
 import 'package:trip_planner/repo/user_repo.dart';
+import 'package:trip_planner/services/youtube_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,13 +24,17 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController handleController = TextEditingController();
+
   final UserRepo userRepo = UserRepo();
   final LocalRepo localRepo = GetIt.I.get();
+  final YoutubeService youtubeService = YoutubeService();
 
   DateTime? selectedDate;
   Gender? gender;
   File? profileImage;
   User? user;
+  String? channelId;
 
   @override
   void initState() {
@@ -51,20 +58,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
+      setState(() => selectedDate = picked);
     }
   }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+    await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      setState(() {
-        profileImage = File(pickedFile.path);
-      });
+      setState(() => profileImage = File(pickedFile.path));
+    }
+  }
+
+  Future<void> _fetchChannelId() async {
+    if (handleController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a YouTube handle")),
+      );
+      return;
+    }
+
+    final handle = handleController.text.trim();
+    final id = await youtubeService.fetchChannelIdFromHandle(handle);
+    if (id != null) {
+      setState(() => channelId = id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Channel ID: $channelId")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid handle or no channel found")),
+      );
     }
   }
 
@@ -88,7 +114,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 40),
 
@@ -172,153 +197,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 16),
 
                 // Gender
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFCDD2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Gender",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                Column(
+                  children: [
+                    RadioListTile<String>(
+                      title: const Text("Male"),
+                      value: Gender.male.name,
+                      groupValue: gender?.name,
+                      onChanged: (v) => setState(() => gender = Gender.male),
+                    ),
+                    RadioListTile<String>(
+                      title: const Text("Female"),
+                      value: Gender.female.name,
+                      groupValue: gender?.name,
+                      onChanged: (v) => setState(() => gender = Gender.female),
+                    ),
+                    RadioListTile<String>(
+                      title: const Text("Other"),
+                      value: Gender.other.name,
+                      groupValue: gender?.name,
+                      onChanged: (v) => setState(() => gender = Gender.other),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // YouTube Handle Input
+                Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("YouTube Channel",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: handleController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: "Enter YouTube Handle (e.g. @Fukarey_7)",
+                            prefixIcon: Icon(Icons.alternate_email),
+                          ),
                         ),
-                      ),
-                      RadioListTile<String>(
-                        title: const Text("Male"),
-                        value: Gender.male.name,
-                        groupValue: gender?.name,
-                        activeColor: Colors.red,
-                        dense: true,
-                        visualDensity: VisualDensity.compact,
-                        contentPadding: EdgeInsets.zero,
-                        onChanged: (value) {
-                          setState(() => gender = Gender.male);
-                        },
-                      ),
-                      RadioListTile<String>(
-                        title: const Text("Female"),
-                        value: Gender.female.name,
-                        groupValue: gender?.name,
-                        activeColor: Colors.red,
-                        dense: true,
-                        visualDensity: VisualDensity.compact,
-                        contentPadding: EdgeInsets.zero,
-                        onChanged: (value) {
-                          setState(() => gender = Gender.female);
-                        },
-                      ),
-                      RadioListTile<String>(
-                        title: const Text("Others"),
-                        value: Gender.other.name,
-                        groupValue: gender?.name,
-                        activeColor: Colors.red,
-                        dense: true,
-                        visualDensity: VisualDensity.compact,
-                        contentPadding: EdgeInsets.zero,
-                        onChanged: (value) {
-                          setState(() => gender = Gender.other);
-                        },
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          onPressed: _fetchChannelId,
+                          child: const Text("Fetch Channel ID"),
+                        ),
+                        if (channelId != null) ...[
+                          const SizedBox(height: 8),
+                          Text("Channel ID: $channelId",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green)),
+                        ]
+                      ],
+                    ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
 
                 // Save Button
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () async {
-                      var connectivityResult =
-                      await Connectivity().checkConnectivity();
-                      if (!context.mounted) return;
-
-                      if (connectivityResult.contains(ConnectivityResult.none)) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text("You are offline. Please connect to the internet.")),
-                        );
-                        return;
-                      }
-
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => const Center(
-                          child: CircularProgressIndicator(color: Colors.red),
-                        ),
-                      );
-
-                      try {
-                        final obj = AppUser(
-                          name: nameController.text,
-                          email: emailController.text,
-                          dob: selectedDate,
-                          gender: gender,
-                          photoUrl: user?.photoURL,
-                        );
-
-                        await userRepo.saveUser(obj);
-                        await localRepo.onLoggedIn(obj);
-                        if (!context.mounted) return;
-
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text("Profile saved successfully!")),
-                        );
-                        context.go(AppRoute.home.path);
-                      } catch (e) {
-                        if (!context.mounted) return;
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Error: ${e.toString()}")),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      "Save Profile",
-                      style: TextStyle(fontSize: 16),
-                    ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
                   ),
+                  onPressed: () async {
+                    final obj = AppUser(
+                      name: nameController.text,
+                      email: emailController.text,
+                      dob: selectedDate,
+                      gender: gender,
+                      photoUrl: user?.photoURL,
+                      channelId: channelId,
+                    );
+                    await userRepo.saveUser(obj);
+                    await localRepo.onLoggedIn(obj);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Profile saved!")),
+                    );
+                    context.go(AppRoute.home.path);
+                  },
+                  child: const Text("Save Profile"),
                 ),
-
                 const SizedBox(height: 16),
 
-                // Logout Button
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () => _logout(context),
-                    child: const Text(
-                      "Logout",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
+                // Logout
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                  onPressed: () => _logout(context),
+                  child: const Text("Logout",
+                      style: TextStyle(color: Colors.white)),
                 ),
-
-                const SizedBox(height: 20),
               ],
             ),
           ),

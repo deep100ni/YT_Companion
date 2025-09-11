@@ -5,13 +5,10 @@ class GeminiService {
   final GenerativeModel _model;
 
   GeminiService(String apiKey)
-  // It's often better to use a more powerful model for complex, multi-part JSON outputs.
-  // 'gemini-1.5-pro' might yield more consistent results than 'gemini-1.5-flash'.
-      : _model = GenerativeModel(model: 'gemini-1.5-pro-latest', apiKey: apiKey);
+      : _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
 
   Future<Map<String, dynamic>> analyzeVideo(
       String title, String description, List<String> comments) async {
-    // --- PROMPT UPDATED AND RE-EXPANDED HERE ---
     final prompt = '''
 **Objective:** Analyze the provided video content (title, description, comments) and generate a structured JSON output containing actionable advice, a summary of feedback, and a sentiment analysis of the comments.
 
@@ -71,7 +68,6 @@ Return ONLY a raw JSON string matching this exact format:
     final text = response.text ?? '{}';
 
     try {
-      // Clean the response to ensure it's valid JSON before parsing
       final startIndex = text.indexOf('{');
       final endIndex = text.lastIndexOf('}');
 
@@ -83,7 +79,6 @@ Return ONLY a raw JSON string matching this exact format:
       }
     } catch (e) {
       print("⚠️ JSON Parse Error: $e\nRaw Response Text: \n$text");
-      // Fallback structure to prevent null errors in the UI
       return {
         "videoTips": ["Error: Could not generate improvement tips."],
         "commentSummary": {

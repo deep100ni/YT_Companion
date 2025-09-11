@@ -1,3 +1,4 @@
+// home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../repo/local_repo.dart';
 import '../repo/user_repo.dart';
 import '../services/youtube_service.dart';
 import 'upload_content_screen.dart';
+import '../widget/api_key_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,17 +29,51 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> filteredVideos = [];
   bool isLoading = true;
 
+  // State variables for channel details
+  String? channelTitle;
+  String? channelThumbnailUrl;
+  String? subscriberCount;
+  String? channelDescription;
+
   @override
   void initState() {
     super.initState();
     start();
-    loadVideos();
+  }
+
+  Future<void> start() async {
+    final _user = await localRepo.getUser();
+    setState(() => user = _user);
+
+    if (user?.channelId != null) {
+      // Fetch channel details
+      final details =
+      await youtubeService.fetchChannelDetails(user!.channelId!);
+      setState(() {
+        channelTitle = details?["title"];
+        channelThumbnailUrl = details?["thumbnail"];
+        subscriberCount = details?["subscriberCount"];
+        channelDescription = details?["description"];
+      });
+
+      // Fetch videos
+      await loadVideos();
+    } else {
+      setState(() => isLoading = false);
+    }
   }
 
   Future<void> loadVideos({String? query}) async {
     setState(() => isLoading = true);
     try {
-      final data = await youtubeService.fetchVideos(searchQuery: query);
+      if (user?.channelId == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+      final data = await youtubeService.fetchVideos(
+        channelId: user!.channelId!,
+        searchQuery: query,
+      );
       setState(() {
         videos = data;
         filteredVideos = data;
@@ -63,18 +99,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> start() async {
-    final _user = await localRepo.getUser();
-    setState(() {
-      user = _user;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 5,
         title: const Text('AI Marketplace Assistant'),
         backgroundColor: Colors.red,
       ),
@@ -82,29 +110,79 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Profile
+            // Channel Info
             Row(
               children: [
                 CircleAvatar(
                   radius: 40,
                   backgroundImage: NetworkImage(
-                    user?.photoUrl ?? "https://example.com/profile.png",
+                    channelThumbnailUrl ?? "https://via.placeholder.com/150",
                   ),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user?.name ?? "User",
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      channelTitle ?? "Channel Name",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    const Text("50 Total subscribers",
-                        style: TextStyle(fontSize: 14, color: Colors.black54)),
+                    Text(
+                      subscriberCount != null
+                          ? "$subscriberCount subscribers"
+                          : "No channel linked",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+
+            // Channel Description Card
+            if (channelDescription != null) ...[
+              Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Container(
+                  height: 150, // fixed height with scroll
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Description",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            channelDescription!,
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.black87),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            const ApiKeyCard(),
             const SizedBox(height: 20),
 
             // Search Bar
@@ -119,33 +197,34 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Video List
+            // Video List / Empty State
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
+                  : (user?.channelId == null
+                  ? const Center(
+                child: Text(
+                    "No YouTube channel linked. Go to Profile to add one."),
+              )
                   : ListView.builder(
                 itemCount: filteredVideos.length,
                 itemBuilder: (context, index) {
                   final video = filteredVideos[index];
-                  return _videoCard(
-                    thumbnailUrl: video["thumbnail"]!,
-                    title: video["title"]!,
-                    views: video["views"]!,
-                    timeAgo: video["time"]!,
-                    description: video["description"]!,
-                    comments: video["comments"]!,
-                  );
+                  return _videoCard(video);
                 },
-              ),
+              )),
             ),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
+        onTap: (index) async {
           setState(() => _currentIndex = index);
-          if (index == 1) context.push(AppRoute.profile.path);
+          if (index == 1) {
+            await context.push(AppRoute.profile.path);
+            await start(); // refresh when back
+          }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
@@ -155,14 +234,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _videoCard({
-    required String thumbnailUrl,
-    required String title,
-    required String views,
-    required String timeAgo,
-    required String description,
-    required List<Map<String, String>> comments,
-  }) {
+  Widget _videoCard(Map<String, dynamic> video) {
+    final thumbnailUrl = video["thumbnail"] ?? "";
+    final title = video["title"] ?? "";
+    final views = video["views"] ?? "0";
+    final timeAgo = video["time"] ?? "";
+    final description = video["description"] ?? "";
+    final commentsLoader = video["commentsLoader"];
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -180,8 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 fit: BoxFit.cover,
               ),
             ),
-            const Icon(Icons.play_circle_fill,
-                color: Colors.white, size: 30),
+            const Icon(Icons.play_circle_fill, color: Colors.white, size: 30),
           ],
         ),
         title: Text(title,
@@ -198,7 +276,13 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(timeAgo),
           ],
         ),
-        onTap: () {
+        onTap: () async {
+          // fetch comments only when opening video
+          List<Map<String, String>> comments = [];
+          if (commentsLoader != null) {
+            comments = await commentsLoader();
+          }
+
           Navigator.push(
             context,
             MaterialPageRoute(
