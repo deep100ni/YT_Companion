@@ -10,7 +10,7 @@ class GeminiService {
   Future<Map<String, dynamic>> analyzeVideo(
       String title, String description, List<String> comments) async {
     final prompt = '''
-**Objective:** Analyze the provided video content (title, description, comments) and generate a structured JSON output containing actionable advice, a summary of feedback, and a sentiment analysis of the comments.
+**Objective:** Review the provided video details (title, description, comments) and give very simple, practical, and easy-to-follow advice for the artist. Keep the suggestions friendly and helpful.
 
 **Video Title:** $title
 **Video Description:** $description
@@ -20,40 +20,35 @@ ${comments.join("\n")}
 ---
 
 **Instructions for the AI Model:**
-Carefully review all the provided information. Fulfill each of the following tasks and structure your entire response as a single, raw JSON object. Do not include any text or formatting outside of the JSON structure.
+Please return your response only as a single JSON object in the structure below. Avoid complex words or long sentences. Keep all advice easy for beginners to understand and useful for making future videos better.
 
-**Task 1: Generate Actionable Video Tips**
-- Create a `videoTips` array of strings.
-- Each string should be a unique, specific, and actionable tip for the content creator.
-- Base these tips on the video's title, description, and the feedback within the comments.
+**Task 1: Easy Video Tips**
+- Create a `videoTips` array of short tips (1–2 sentences each).
+- Tips should be clear, simple, and directly helpful for the artist (e.g., "Show more of the drawing process step by step" instead of "Increase transparency and improve narrative engagement").
 
 **Task 2: Summarize Key Comments**
-- Create a `commentSummary` object.
-- Inside this object, create two arrays of strings: `positiveFeedback` and `commonQuestions`.
-- Populate `positiveFeedback` with direct quotes or summaries of encouraging comments.
-- Populate `commonQuestions` with frequently asked questions or suggestions for future videos found in the comments.
+- Make a `commentSummary` object with:
+  - `positiveFeedback`: short quotes or summaries of nice things people said.
+  - `commonQuestions`: simple, common viewer questions or requests.
+- Keep sentences short and easy to read.
 
-**Task 3: Analyze Audience Sentiment**
+**Task 3: Audience Sentiment**
 - Create an `audienceSentiment` object.
-- **Based ONLY on the provided comments**, classify the sentiment of the audience.
-- Calculate the percentage for "positive", "neutral", and "negative" sentiments.
-- The sum of these three percentages must equal 100.
+- Estimate the percentage of "positive", "neutral", and "negative" comments (they must add up to 100).
+- Keep it simple.
 
-**Final Output Structure:**
-Return ONLY a raw JSON string matching this exact format:
+**Final Output Format (JSON only):**
 {
   "videoTips": [
-    "Actionable tip based on the provided content...",
-    "Another constructive suggestion..."
+    "Easy tip 1...",
+    "Easy tip 2..."
   ],
   "commentSummary": {
     "positiveFeedback": [
-      "Summary of positive feedback from comments...",
-      "A direct quote of positive feedback..."
+      "Short positive comment..."
     ],
     "commonQuestions": [
-      "A common question asked by viewers...",
-      "A request for a follow-up video..."
+      "Simple common question..."
     ]
   },
   "audienceSentiment": {

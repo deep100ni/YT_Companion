@@ -8,7 +8,6 @@ import '../repo/local_repo.dart';
 import '../repo/user_repo.dart';
 import '../services/youtube_service.dart';
 import 'upload_content_screen.dart';
-import '../widget/api_key_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -181,9 +180,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
             ],
-
-            const ApiKeyCard(),
-            const SizedBox(height: 20),
 
             // Search Bar
             TextField(

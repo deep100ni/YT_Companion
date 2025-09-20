@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +11,7 @@ import 'package:trip_planner/models/user.dart';
 import 'package:trip_planner/repo/local_repo.dart';
 import 'package:trip_planner/repo/user_repo.dart';
 import 'package:trip_planner/services/youtube_service.dart';
+import 'package:trip_planner/widget/api_key_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -262,6 +261,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+
+                // Gemini API Key Card
+                const ApiKeyCard(),
                 const SizedBox(height: 24),
 
                 // Save Button
