@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:trip_planner/app_route.dart';
 import 'package:trip_planner/models/user.dart';
 import 'package:trip_planner/repo/local_repo.dart';
