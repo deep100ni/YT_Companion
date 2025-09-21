@@ -1,2 +1,2 @@
-# trip_planner
+# YT Companion
 
