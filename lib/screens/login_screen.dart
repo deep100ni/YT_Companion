@@ -6,9 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trip_planner/app_route.dart';
 import 'package:trip_planner/repo/local_repo.dart';
+import 'package:trip_planner/repo/user_repo.dart';
 
 class LoginScreen extends StatelessWidget {
   final LocalRepo localRepo = GetIt.I.get();
+  final UserRepo userRepo = GetIt.I.get();
 
   LoginScreen({super.key});
 
@@ -38,11 +40,19 @@ class LoginScreen extends StatelessWidget {
          final displayName = user.displayName ?? "No Name";
          final email = user.email ?? "No Email";
 
-         await localRepo.onLoggedIn();
+         final existingUser = await userRepo.getUser(email);
 
          if (!context.mounted) return;
 
-         context.go(AppRoute.home.path);
+         if (existingUser == null){
+           context.go(AppRoute.profile.path);
+         }else{
+           await localRepo.onLoggedIn(existingUser);
+           if (!context.mounted) return;
+           context.go(AppRoute.home.path);
+
+         }
+
 
          ScaffoldMessenger.of(context).showSnackBar(
            SnackBar(

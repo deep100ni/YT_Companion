@@ -1,28 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trip_planner/models/user.dart';
 
-class UserRepo{
-
+class UserRepo {
   final coll = FirebaseFirestore.instance.collection('users');
 
-  Future<AppUser?> getUser(String email) async{
-    final querySnapshot = await coll.where('email', isEqualTo: email)
-        .limit(1)
-        .get();
+  Future<AppUser?> getUser(String email) async {
+    final querySnapshot =
+    await coll.where('email', isEqualTo: email).limit(1).get();
 
-    if(querySnapshot.docs.isNotEmpty){
+    if (querySnapshot.docs.isNotEmpty) {
       final doc = querySnapshot.docs.first;
-      return AppUser.fromJson(doc.data(), doc.id);
+      return AppUser.fromJsonAndId(doc.data(), doc.id);
     }
-
     return null;
   }
 
-  Future<void> saveUser(AppUser user) async{
+  Future<void> saveUser(AppUser user) async {
     final existingUser = await getUser(user.email);
-    if(existingUser != null){
+    if (existingUser != null) {
       await coll.doc(existingUser.id).update(user.toJson());
-    }else{
+    } else {
       await coll.add(user.toJson());
     }
   }
